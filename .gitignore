@@ -1,0 +1,21 @@
+# 비밀 정보 / 수집 데이터
+.env
+data/
+
+# 팀 내부 문서 (개인정보, 서버 주소 포함 → 공개 저장소에 올리지 않음)
+pre/
+docs/
+
+# 파이썬 / 도구
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.omc/
+
+# Office 임시 파일
+~$*
+
+# 개인 실행 메모
+egen/수집기.txt
+server/SS.txt
