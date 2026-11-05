@@ -6,6 +6,8 @@ from pathlib import Path
 
 _tmp = tempfile.mkdtemp()
 os.environ["EGEN_DB_PATH"] = str(Path(_tmp) / "test.db")
+# 계약 테스트는 LLM 없이도 같은 결과가 나와야 하므로 규칙 기반으로 고정 (LLM 품질은 별도 평가)
+os.environ.setdefault("TRIAGE_BACKEND", "rule")
 
 import pytest  # noqa: E402
 
