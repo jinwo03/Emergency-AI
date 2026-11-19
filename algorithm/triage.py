@@ -1,11 +1,19 @@
-"""증상 분석 (C 담당).
+"""증상 분석 (C 담당) v2.
 
 흐름
-1. 너무 짧은 첫 발화는 LLM 호출 없이 바로 되묻는다.
+1. 짧고(15자 이하) 증상 단어가 하나도 없는 발화는 LLM 호출 없이 바로 되묻는다.
 2. Local LLM(Ollama)에 JSON 스키마를 강제해 KTAS·진료과·E-Gen 질환 코드를 받는다.
-3. 결과를 검증·정규화한다 (허용 목록 밖 값 제거, 진료과 표기 통일).
-4. 위험 신호 키워드가 있으면 KTAS 상한을 강제한다 (Under-triage 방지 안전장치).
-5. LLM을 쓸 수 없으면 규칙 기반 결과로 대체한다.
+3. 증상 규칙(triage_rules)으로 질환 코드를 보충하고 KTAS 상한을 건다 (Under-triage 방지).
+4. 나이·문맥과 맞지 않는 질환 코드를 지우고, 진료과를 질환에 맞게 정렬한다.
+5. LLM을 쓸 수 없으면 규칙만으로 결과를 만든다.
+
+v1 대비 변경 (eval/v1_run 의 오류 분석 결과 반영)
+- 증상이 있는 문장에서 LLM이 되묻는 것을 막음 (위급 환자 지연 7건)
+- 질환 코드가 나오면 그 질환의 기본 KTAS 상한 적용 (코드는 맞히고 KTAS만 낮은 경우)
+- 증상 규칙 확대: 화상, 절단, 위장관 출혈, 영아 발열, 이물 삼킴 등 (질환·KTAS 모두 놓친 37건)
+- 부정·비급성 표현("가슴은 안 아프고", "예전에", "한 달 됐어요")에서는 규칙을 끔
+- 성인에게 소아청소년과, 맥락 없는 산과 코드 등 나이·문맥 오류 제거
+- 프롬프트에 정답 예시(few-shot) 추가, Ollama 모델 상주(keep_alive)로 시간 초과 방지
 
 환경 변수
 - TRIAGE_BACKEND : "llm"(기본) 또는 "rule" (테스트·LLM 없는 PC용)
@@ -15,39 +23,28 @@
 import json
 import logging
 import os
-import re
 
 import requests
 
+from algorithm import triage_rules as rules
 from algorithm.egen_codes import DEPARTMENTS, EGEN_CONDITIONS, normalize_dept, valid_condition
 from contracts.schemas import TriageResult, TriageStatus
 
 log = logging.getLogger(__name__)
 
-MIN_TEXT_LEN = 10        # 이보다 짧은 첫 발화는 바로 되묻기
 MAX_FOLLOW_UPS = 2       # 되묻기 최대 횟수 (응급 상황이라 길게 끌지 않음)
-LLM_TIMEOUT_SEC = 30
+ASK_MAX_LEN = 15         # 되묻기는 이 길이 이하의 짧은 발화에만 (길게 설명했으면 일단 분류)
+LLM_TIMEOUT_SEC = 60     # 첫 호출은 모델을 GPU에 올리느라 오래 걸릴 수 있음
+LLM_KEEP_ALIVE = "30m"   # 호출 사이에 모델을 내리지 않음
 
-DEFAULT_FOLLOW_UP = "어떤 증상이 있으신지 조금 더 자세히 말씀해 주세요."
-
-# ── 위험 신호 → KTAS 상한 ─────────────────────────────────────────────
-# LLM이 덜 위급하게 판단해도 이 표현이 있으면 KTAS를 이 값 이하로 강제한다
-RED_FLAGS: list[tuple[str, int]] = [
-    (r"의식(이|을)?\s*(없|잃)|반응(이)?\s*없|숨(을)?\s*(안|못)\s*쉬|호흡(이)?\s*없|심정지|맥(이)?\s*없", 1),
-    (r"가슴.{0,6}(아프|아파|통증|조이|조여|쥐어짜|답답)|흉통", 2),
-    (r"말(이)?\s*어눌|발음(이)?\s*(이상|어눌)|(팔|다리)(에|가)?\s*힘(이)?\s*(없|빠)|한쪽.{0,4}(마비|저림|처짐)|편마비|얼굴.{0,4}(처지|비뚤)", 2),
-    (r"피를\s*토|토혈|각혈|객혈|피를\s*기침", 2),
-    (r"경련|발작", 2),
-    (r"숨(이)?\s*(차|가빠|막히)|호흡\s*곤란|숨쉬기\s*(힘들|어렵)", 2),
-    (r"머리(가)?\s*깨질|벼락\s*두통|극심한\s*두통", 2),
+FOLLOW_UPS = [
+    "환자분이 지금 의식이 있고 숨은 잘 쉬나요? 어디가 어떻게 아픈지도 말씀해 주세요.",
+    "언제부터 그랬는지, 다치거나 쓰러진 적이 있는지 알려주세요.",
 ]
+DEFAULT_FOLLOW_UP = FOLLOW_UPS[0]
 
-
-def _ktas_ceiling(text: str) -> int | None:
-    """위험 신호가 있으면 허용되는 최대 KTAS 값을, 없으면 None을 돌려준다"""
-    ceilings = [level for pattern, level in RED_FLAGS if re.search(pattern, text)]
-    return min(ceilings) if ceilings else None
-
+# 평가용: 마지막 호출이 LLM 결과였는지 규칙 대체였는지 기록
+LAST_SOURCE = "none"
 
 # ── LLM 프롬프트·스키마 ──────────────────────────────────────────────
 _CONDITION_LINES = "\n".join(
@@ -55,50 +52,56 @@ _CONDITION_LINES = "\n".join(
     for code, info in EGEN_CONDITIONS.items()
 )
 
+FEW_SHOT = """[예시]
+말: 할머니가 검은 변을 보시고 어지럽대요 (82세)
+답: {"ktas": 2, "departments": ["소화기내과", "내과"], "conditions": ["Y0081"]}
+말: 아이가 끓는 물에 팔과 배를 데었어요 (4세)
+답: {"ktas": 2, "departments": ["외과", "성형외과", "소아청소년과"], "conditions": ["Y0120"]}
+말: 작업하다 손가락이 잘렸어요 (37세)
+답: {"ktas": 2, "departments": ["정형외과", "성형외과"], "conditions": ["Y0131"]}
+말: 생후 2개월 아기가 열이 나요 (0세)
+답: {"ktas": 2, "departments": ["소아청소년과"], "conditions": []}
+말: 발목을 삐었는데 걸을 수는 있어요 (27세)
+답: {"ktas": 4, "departments": ["정형외과"], "conditions": []}
+말: 감기 기운이 있고 콧물이 나요 (26세)
+답: {"ktas": 5, "departments": ["내과", "이비인후과"], "conditions": []}"""
+
 SYSTEM_PROMPT = f"""너는 한국 응급실 이송 전 단계의 중증도 분류 보조 도구다.
-보호자의 말을 읽고 아래 JSON 형식으로만 답한다. 설명 문장은 쓰지 않는다.
+보호자의 말을 읽고 JSON으로만 답한다. 설명 문장은 쓰지 않는다.
 
 [KTAS 중증도: 숫자가 작을수록 위급]
-1 = 소생: 의식 없음, 호흡·맥박 없음, 심정지
-2 = 긴급: 흉통·호흡곤란, 갑작스런 한쪽 마비나 말 어눌함, 토혈, 경련, 극심한 두통
+1 = 소생: 의식 없음, 호흡·맥박 없음, 심정지, 기도 막힘, 대량 출혈
+2 = 긴급: 흉통, 호흡곤란, 갑작스런 한쪽 마비·말 어눌함, 토혈·검은 변+어지러움, 경련, 극심한 두통,
+    넓은 화상, 손가락·팔다리 절단, 3개월 미만 영아 발열, 아이의 건전지·자석 삼킴, 눈 부상, 자해·타해 위험
 3 = 응급: 지속되는 복통, 고열, 골절 의심, 출혈은 있으나 의식 명료
 4 = 준응급: 가벼운 열상, 염좌, 경미한 통증
-5 = 비응급: 감기 증상, 오래된 경미한 증상
+5 = 비응급: 감기 증상, 오래된 경미한 증상, 약 처방
 판단이 애매하면 더 위급한 쪽(작은 숫자)을 고른다.
 
 [의심 질환 코드: 해당될 때만 최대 3개, 없으면 빈 배열]
 {_CONDITION_LINES}
 
-[진료과] 반드시 허용 목록 안에서 최대 3개를 고른다.
+[진료과] 허용 목록 안에서 최대 3개, 가장 중요한 과를 맨 앞에. 소아청소년과는 18세 이하에만.
 
-[되묻기]
-- 무슨 증상인지 알 수 없을 때만 need_more_info=true 로 하고, 짧은 존댓말 질문 하나를 follow_up_question 에 쓴다.
-- 위험 신호(의식 저하, 호흡 이상, 흉통, 마비 등)가 이미 있으면 되묻지 말고 바로 분류한다.
-- need_more_info=false 이면 follow_up_question 은 빈 문자열로 둔다."""
+{FEW_SHOT}"""
 
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
-        "need_more_info": {"type": "boolean"},
-        "follow_up_question": {"type": "string"},
         "ktas": {"type": "integer", "minimum": 1, "maximum": 5},
         "departments": {"type": "array", "items": {"type": "string", "enum": DEPARTMENTS}},
         "conditions": {"type": "array", "items": {"type": "string", "enum": list(EGEN_CONDITIONS)}},
     },
-    "required": ["need_more_info", "follow_up_question", "ktas", "departments", "conditions"],
+    "required": ["ktas", "departments", "conditions"],
 }
 
 
 def _build_user_message(text: str, age: int | None, history: list[str]) -> str:
     """이전 발화까지 합쳐 LLM에 넘길 사용자 메시지를 만든다"""
-    lines = []
-    if age is not None:
-        lines.append(f"환자 나이: {age}세")
+    lines = [f"환자 나이: {age}세" if age is not None else "환자 나이: 모름"]
     for i, prev in enumerate(history, 1):
         lines.append(f"이전 발화 {i}: {prev}")
     lines.append(f"이번 발화: {text}")
-    if len(history) >= MAX_FOLLOW_UPS:
-        lines.append("※ 더 이상 되묻지 말고 지금 정보로 분류할 것")
     return "\n".join(lines)
 
 
@@ -113,6 +116,7 @@ def _call_llm(text: str, age: int | None, history: list[str]) -> dict:
         ],
         "format": RESPONSE_SCHEMA,
         "stream": False,
+        "keep_alive": LLM_KEEP_ALIVE,
         "options": {"temperature": 0},
     }
     resp = requests.post(url, json=payload, timeout=LLM_TIMEOUT_SEC)
@@ -120,54 +124,50 @@ def _call_llm(text: str, age: int | None, history: list[str]) -> dict:
     return json.loads(resp.json()["message"]["content"])
 
 
-# ── 규칙 기반 대체 경로 ──────────────────────────────────────────────
-def _rule_based(text: str) -> dict:
-    """LLM을 쓸 수 없을 때의 최소 규칙. 기본은 응급의학과, 위험 신호만 반영"""
-    departments, conditions = ["응급의학과"], []
-    if re.search(RED_FLAGS[1][0], text):
-        departments, conditions = ["순환기내과"], ["Y0010"]
-    elif re.search(RED_FLAGS[2][0], text):
-        departments, conditions = ["신경과"], ["Y0020"]
-    return {"need_more_info": False, "follow_up_question": "", "ktas": 3,
-            "departments": departments, "conditions": conditions}
+# ── 결과 조립 ────────────────────────────────────────────────────────
+def _merge_conditions(rule_codes: list[str], llm_codes: list, text: str, age: int | None) -> list[str]:
+    """규칙 코드를 앞에, LLM 코드를 뒤에 두고 정합성 필터를 거친다"""
+    merged: list[str] = []
+    for c in list(rule_codes) + [str(c).strip().upper() for c in llm_codes or []]:
+        if not valid_condition(c):
+            continue
+        c = rules.plausible(c, text, age)
+        if c and c not in merged:
+            merged.append(c)
+    return merged[:3]
 
 
-# ── 결과 검증·정규화 ─────────────────────────────────────────────────
-def _to_result(raw: dict, full_text: str, history: list[str]) -> TriageResult:
-    """LLM/규칙 결과를 계약 형식으로 바꾸고 안전장치를 적용한다"""
-    can_ask = len(history) < MAX_FOLLOW_UPS
-    if raw.get("need_more_info") and can_ask and _ktas_ceiling(full_text) is None:
-        question = (raw.get("follow_up_question") or "").strip() or DEFAULT_FOLLOW_UP
-        return TriageResult(status=TriageStatus.need_more_info, follow_up_question=question)
-
-    # 진료과: 표기 통일 + 허용 목록 밖 값 제거 + 중복 제거
-    departments = []
-    for d in raw.get("departments") or []:
+def _order_departments(llm_depts: list, conditions: list[str], text: str, age: int | None) -> list[str]:
+    """첫 질환의 대표 진료과를 맨 앞에 두고, 나이·문맥에 맞지 않는 과를 뺀다"""
+    depts: list[str] = []
+    if conditions:
+        depts.append(EGEN_CONDITIONS[conditions[0]]["depts"][0])
+    for d in llm_depts or []:
         nd = normalize_dept(str(d).strip())
-        if nd and nd not in departments:
-            departments.append(nd)
-    if not departments:
-        departments = ["응급의학과"]
+        if nd and nd not in depts:
+            depts.append(nd)
+    if age is not None and age >= 19 and "소아청소년과" in depts:
+        depts.remove("소아청소년과")
+    if "산부인과" in depts and not (rules.OBSTETRIC.search(text) or rules.GYNECOLOGIC.search(text)):
+        depts.remove("산부인과")
+    if age is not None and age <= 12 and "소아청소년과" not in depts:
+        depts.insert(1 if depts else 0, "소아청소년과")
+    return (depts or ["응급의학과"])[:3]
 
-    # 질환 코드: E-Gen 27개 코드만 남김
-    conditions = []
-    for c in raw.get("conditions") or []:
-        code = str(c).strip().upper()
-        if valid_condition(code) and code not in conditions:
-            conditions.append(code)
 
-    # KTAS: 범위 보정 후 위험 신호 상한 적용
+def _final_ktas(llm_ktas, rule_ceiling: int | None, rule_codes: list[str], conditions: list[str], text: str) -> int:
+    """LLM KTAS에 규칙 상한과 질환 코드 상한을 적용한다 (낮추는 방향만, 즉 더 위급하게만)"""
     try:
-        ktas = int(raw.get("ktas"))
+        ktas = min(max(int(llm_ktas), 1), 5)
     except (TypeError, ValueError):
         ktas = 3
-    ktas = min(max(ktas, 1), 5)
-    ceiling = _ktas_ceiling(full_text)
-    if ceiling is not None:
-        ktas = min(ktas, ceiling)
-
-    return TriageResult(status=TriageStatus.complete, ktas=ktas,
-                        departments=departments[:3], conditions=conditions[:3])
+    if rule_ceiling is not None:
+        ktas = min(ktas, rule_ceiling)
+    if not rules.is_non_acute(text):
+        for c in conditions:
+            if c not in rule_codes:          # 규칙이 직접 찾은 코드는 규칙 상한을 따름
+                ktas = min(ktas, rules.CODE_CEILING[c])
+    return ktas
 
 
 def analyze_symptoms(text: str, age: int | None, history: list[str]) -> TriageResult:
@@ -182,21 +182,31 @@ def analyze_symptoms(text: str, age: int | None, history: list[str]) -> TriageRe
         정보가 충분하면 status=complete + ktas/departments/conditions(E-Gen 코드),
         부족하면 status=need_more_info + follow_up_question.
     """
+    global LAST_SOURCE
     full_text = " ".join(history + [text])
+    rule_codes, rule_ceiling = rules.scan(full_text, age)
 
-    # 1. 너무 짧은 첫 발화는 위험 신호가 없으면 바로 되묻기
-    if len(text) < MIN_TEXT_LEN and not history and _ktas_ceiling(text) is None:
-        return TriageResult(status=TriageStatus.need_more_info, follow_up_question=DEFAULT_FOLLOW_UP)
+    # 1. 짧고 증상 단어도 위험 신호도 없으면 되묻기 (최대 MAX_FOLLOW_UPS번)
+    #    증상 어휘 목록은 완벽할 수 없으므로, 길게 설명한 발화는 되묻지 않고 LLM이 분류한다
+    vague = len(text.strip()) <= ASK_MAX_LEN and not rules.has_symptom(full_text)
+    if vague and rule_ceiling is None and len(history) < MAX_FOLLOW_UPS:
+        LAST_SOURCE = "ask"
+        return TriageResult(status=TriageStatus.need_more_info, follow_up_question=FOLLOW_UPS[len(history)])
 
-    # 2. LLM 호출 (실패 시 규칙 기반으로 대체)
+    # 2. LLM 호출 (실패하면 규칙만 사용)
     raw = None
     if os.environ.get("TRIAGE_BACKEND", "llm") == "llm":
         try:
             raw = _call_llm(text, age, history)
+            LAST_SOURCE = "llm"
         except Exception as exc:  # 연결 실패, 시간 초과, JSON 오류 등
             log.warning("LLM triage 실패, 규칙 기반으로 대체: %s", exc)
     if raw is None:
-        raw = _rule_based(full_text)
+        LAST_SOURCE = "rule"
+        raw = {"ktas": 3, "departments": [], "conditions": []}
 
-    # 3. 검증·정규화·안전장치
-    return _to_result(raw, full_text, history)
+    # 3. 규칙 보정
+    conditions = _merge_conditions(rule_codes, raw.get("conditions"), full_text, age)
+    departments = _order_departments(raw.get("departments"), conditions, full_text, age)
+    ktas = _final_ktas(raw.get("ktas"), rule_ceiling, rule_codes, conditions, full_text)
+    return TriageResult(status=TriageStatus.complete, ktas=ktas, departments=departments, conditions=conditions)
