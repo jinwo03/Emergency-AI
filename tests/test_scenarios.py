@@ -2,10 +2,10 @@
 from algorithm.egen_codes import DEPARTMENTS, EGEN_CONDITIONS
 import pytest
 
-from eval.run_eval import HOLDOUT, SCENARIOS, load_scenarios
+from eval.run_eval import HOLDOUT, SCENARIOS, STRESS, load_scenarios
 
 
-@pytest.mark.parametrize("path,minimum", [(SCENARIOS, 200), (HOLDOUT, 50)])
+@pytest.mark.parametrize("path,minimum", [(SCENARIOS, 200), (HOLDOUT, 50), (STRESS, 25)])
 def test_scenarios_are_valid(path, minimum):
     rows = load_scenarios(path)
     assert len(rows) >= minimum

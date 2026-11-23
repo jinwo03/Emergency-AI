@@ -27,6 +27,8 @@ from contracts.schemas import TriageStatus
 ROOT = Path(__file__).resolve().parent
 SCENARIOS = ROOT / "scenarios.csv"            # 개발용: 오류 분석·규칙 튜닝에 사용
 HOLDOUT = ROOT / "scenarios_holdout.csv"       # 검증용: 튜닝에 쓰지 않고 최종 성능 보고에만 사용
+STRESS = ROOT / "scenarios_stress.csv"         # 구어체 스트레스: 횡설수설·음성인식 오류·함정 표현 (튜닝 금지)
+SETS = {"dev": SCENARIOS, "holdout": HOLDOUT, "stress": STRESS}
 
 
 def _split(value: str) -> list[str]:
@@ -185,8 +187,8 @@ def main() -> None:
     ap.add_argument("--no-safety", action="store_true", help="위험 신호 KTAS 상한 끄기 (비교 실험용)")
     ap.add_argument("--limit", type=int, help="앞에서 N건만 실행 (빠른 확인용)")
     ap.add_argument("--name", help="결과 폴더 이름")
-    ap.add_argument("--set", choices=["dev", "holdout"], default="dev",
-                    help="dev=개발용 201건(규칙 튜닝에 사용), holdout=검증용(튜닝에 안 쓴 문제)")
+    ap.add_argument("--set", choices=list(SETS), default="dev",
+                    help="dev=개발용 201건(규칙 튜닝에 사용), holdout=검증용(튜닝에 안 쓴 문제), stress=구어체 스트레스")
     ap.add_argument("--replay", help="이전 cases.csv의 LLM 출력을 재사용 (Ollama 없이 후처리만 비교)")
     args = ap.parse_args()
 
@@ -210,7 +212,7 @@ def main() -> None:
         print("모델 준비 중 (첫 호출 워밍업)...")
         triage.analyze_symptoms("가슴이 아파요", 50, [])
 
-    scenarios = load_scenarios(SCENARIOS if args.set == "dev" else HOLDOUT)
+    scenarios = load_scenarios(SETS[args.set])
     if args.limit:
         scenarios = scenarios[: args.limit]
 
