@@ -1,0 +1,62 @@
+﻿id,category,text,age,gold_ktas,pred_ktas,gold_departments,pred_departments,gold_conditions,pred_conditions,follow_up_question,seconds,source,status_ok,unneeded_ask,ktas_exact,ktas_within1,under,over,critical_under,dept_top1,dept_any,cond_hit,cond_outside
+H001,Y0010,아빠가 가슴 한가운데가 뻐근하다면서 얼굴이 하얗게 질렸어요,64,2,2,순환기내과|내과,심장혈관흉부외과|응급의학과,Y0010,Y0010,,3.9,?,True,False,True,True,False,False,False,False,False,True,False
+H002,Y0010,할머니가 가슴을 움켜쥐고 앉아 계세요 말을 잘 못 하세요,79,2,2,순환기내과|내과|응급의학과,심장혈관흉부외과|응급의학과|내과,Y0010,Y0010,,3.83,?,True,False,True,True,False,False,False,False,True,True,False
+H003,Y0010,남편이 왼쪽 가슴이 짓눌리는 느낌이 20분 넘게 간대요,52,2,2,순환기내과|내과,심장혈관흉부외과|응급의학과,Y0010,Y0010,,3.71,?,True,False,True,True,False,False,False,False,False,True,False
+H004,Y0020,아버지가 갑자기 입이 돌아가고 침이 줄줄 새요,71,2,3,신경과|신경외과,응급의학과,Y0020,,,32.02,?,True,False,False,True,True,False,True,False,False,False,False
+H005,Y0020,엄마가 한쪽 팔다리가 축 늘어져서 못 움직이세요,68,2,2,신경과|신경외과,신경과|정형외과,Y0020,Y0020,,3.61,?,True,False,True,True,False,False,False,True,True,True,False
+H006,Y0020,할아버지가 갑자기 말이 안 나오고 오른손으로 컵을 못 잡으세요,77,2,3,신경과|신경외과,응급의학과,Y0020,,,32.01,?,True,False,False,True,True,False,True,False,False,False,False
+H007,Y0031,누나가 머리가 터질 것 같다며 쓰러졌어요,41,2,2,신경외과|신경과,신경과|응급의학과,Y0031,Y0031|Y0032,,3.85,?,True,False,True,True,False,False,False,True,True,True,True
+H008,Y0032,아이가 놀이터에서 떨어져 머리를 부딪혔는데 계속 졸려해요,5,2,2,신경외과|소아청소년과,신경과|소아청소년과,Y0032,Y0032,,3.56,?,True,False,True,True,False,False,False,False,True,True,False
+H009,Y0032,할아버지가 화장실에서 미끄러져 머리를 찧으셨는데 아까부터 같은 말만 반복하세요,83,2,2,신경외과,신경과|응급의학과|소아청소년과,Y0032,Y0032,,3.88,?,True,False,True,True,False,False,False,False,False,True,False
+H010,Y0041,삼촌이 갑자기 등 한가운데가 찢기는 것처럼 아프다고 소리를 질러요,61,2,2,심장혈관흉부외과|흉부외과|순환기내과,응급의학과|내과|외과,Y0041,Y0042,,3.63,?,True,False,True,True,False,False,False,False,False,False,True
+H011,Y0060,남편이 하루 종일 배가 아프더니 이제 오른쪽 아래만 콕콕 쑤시고 걸으면 울린대요,29,3,3,외과|소화기내과,소화기내과|외과|응급의학과,Y0060,,,3.65,?,True,False,True,True,False,False,False,True,True,False,False
+H012,Y0060,엄마 배가 남산만 하게 부풀고 계속 토하세요 변을 며칠째 못 보셨어요,72,3,3,외과|소화기내과,소화기내과|외과|응급의학과,Y0060,,,3.7,?,True,False,True,True,False,False,False,True,True,False,False
+H013,Y0070,8개월 아기가 30분 간격으로 발버둥 치며 울고 토했어요,0,2,3,소아청소년과|외과,소아청소년과,Y0070,,,3.38,?,True,False,False,True,True,False,True,True,True,False,False
+H014,Y0081,아버지가 화장실에서 시커먼 변을 보시고 식은땀을 흘리세요,69,2,2,소화기내과|내과,소화기내과|응급의학과|감염내과,Y0081,Y0081,,3.81,?,True,False,True,True,False,False,False,True,True,True,False
+H015,Y0081,남편이 토했는데 시뻘건 피가 섞여 나왔어요,48,2,2,소화기내과|내과,소화기내과|응급의학과,Y0081,,,3.51,?,True,False,True,True,False,False,False,True,True,False,False
+H016,Y0082,두 살 딸이 단추 모양 배터리를 입에 넣었다가 없어졌어요,2,2,4,소아청소년과|소화기내과,소아청소년과|소화기내과|응급의학과,Y0082,Y0082,,3.7,?,True,False,False,False,True,False,True,True,True,True,False
+H017,Y0082,아이가 할머니 혈압약을 몇 알 먹은 것 같아요,3,2,4,소아청소년과|응급의학과,소아청소년과|응급의학과,Y0082,,,3.44,?,True,False,False,False,True,False,True,True,True,,False
+H018,Y0091,아버지가 기침을 하는데 새빨간 피가 계속 올라와요,70,2,2,호흡기내과|내과,소아청소년과|흉부외과,Y0091,,,3.57,?,True,False,True,True,False,False,False,False,False,False,False
+H019,Y0092,아기가 귤 먹다가 켁켁거리더니 숨을 그르렁거려요,1,2,2,소아청소년과|이비인후과,소아청소년과|응급의학과,Y0092,,,3.46,?,True,False,True,True,False,False,False,True,True,False,False
+H020,Y0111,아내가 37주인데 진통이 2분마다 오고 힘을 주고 싶대요,30,2,5,산부인과,산부인과|응급의학과|내과,Y0111,Y0111,,3.75,?,True,False,False,False,True,False,True,True,True,True,False
+H021,Y0112,임신 28주인데 하혈을 많이 해요,33,2,2,산부인과,산부인과,Y0112,Y0112,,3.37,?,True,False,True,True,False,False,False,True,True,True,False
+H022,Y0113,딸이 갑자기 오른쪽 아랫배를 붙잡고 데굴데굴 굴러요 생리는 끝났대요,19,2,3,산부인과|외과,소아청소년과|내과|외과,Y0113|Y0060,,,3.49,?,True,False,False,True,True,False,True,False,True,False,False
+H023,Y0120,엄마가 기름이 튀어서 얼굴하고 목에 물집이 크게 잡혔어요,56,2,4,외과|성형외과,외과|피부과|응급의학과,Y0120,,,3.59,?,True,False,False,False,True,False,True,True,True,False,False
+H024,Y0120,아이가 정수기 뜨거운 물을 다리에 쏟아서 피부가 벗겨졌어요,3,2,5,외과|성형외과|소아청소년과,외과,Y0120,,,3.32,?,True,False,False,False,True,False,True,True,True,False,False
+H025,Y0131,목공하다가 톱에 검지가 반쯤 잘려나갔어요,46,2,4,정형외과|성형외과,외과,Y0131,Y0132,,3.39,?,True,False,False,False,True,False,True,False,False,False,True
+H026,Y0141,투석하시는 할머니가 오늘 투석 빼먹으시고 숨쉬기 힘들어하세요,74,2,2,신장내과|내과,신경과|내과|비뇨의학과,Y0141,,,3.52,?,True,False,True,True,False,False,False,False,True,False,False
+H027,Y0150,언니가 누가 자기를 죽이려 한다면서 창문으로 뛰어내리려고 해요,29,2,5,정신건강의학과,정신건강의학과|응급의학과,Y0150,,,3.52,?,True,False,False,False,True,False,True,True,True,False,False
+H028,Y0160,용접하다 불똥이 눈에 들어갔는데 눈을 못 뜨겠대요,38,2,5,안과,안과,Y0160,,,3.22,?,True,False,False,False,True,False,True,True,True,False,False
+H029,Y0171,자전거 사고로 허벅지가 깊게 찢어져서 피가 수건을 다 적셨어요,22,2,2,외상외과|외과|정형외과,외과,Y0171,,,3.26,?,True,False,True,True,False,False,False,True,True,,False
+H030,일반,할아버지가 식사하다가 갑자기 고개를 떨구시고 불러도 대답이 없으세요,81,1,3,응급의학과|신경과|순환기내과,응급의학과,,,,32.01,?,True,False,False,False,True,False,True,True,True,,False
+H031,일반,아기가 얼굴이 시퍼렇게 변하고 숨을 안 쉬는 것 같아요,0,1,1,응급의학과|소아청소년과,응급의학과,,,,32.02,?,True,False,True,True,False,False,False,True,True,,False
+H032,일반,남편이 땅벌에 쏘이고 몸에 두드러기가 퍼지더니 숨쉬기 버거워해요,47,1,2,응급의학과|내과,피부과|내과|응급의학과,,,,3.6,?,True,False,False,True,True,False,False,False,True,,False
+H033,일반,동생이 차에 치였는데 숨을 거칠게 몰아쉬고 대답을 못 해요,17,1,2,외상외과|응급의학과,응급의학과|소아청소년과,,,,3.5,?,True,False,False,True,True,False,False,True,True,,False
+H034,일반,아이가 열이 펄펄 나고 축 늘어져서 눈을 잘 못 맞춰요,1,2,3,소아청소년과,소아청소년과|응급의학과,,,,3.48,?,True,False,False,True,True,False,True,True,True,,False
+H035,일반,엄마가 숨이 차서 누우면 더 답답하대요 다리도 부었어요,76,2,2,순환기내과|내과|호흡기내과,내과|흉부외과|신경과,,,,3.56,?,True,False,True,True,False,False,False,True,True,,False
+H036,일반,아빠가 땀을 비 오듯 흘리고 손이 떨리면서 말이 어눌해요 당뇨약 드세요,63,2,2,내분비내과|내과|신경과,내과|신경과,,,,3.45,?,True,False,True,True,False,False,False,True,True,,False
+H037,일반,딸이 천식 발작이 와서 입술이 하얘지고 쌕쌕거려요,9,2,2,소아청소년과|호흡기내과,소아청소년과|응급의학과,,,,3.5,?,True,False,True,True,False,False,False,True,True,,False
+H038,일반,할머니가 갑자기 엉뚱한 소리를 하시고 사람을 못 알아보세요,84,2,2,신경과|내과,신경과|정신건강의학과,,,,3.58,?,True,False,True,True,False,False,False,True,True,,False
+H039,일반,아들이 계단에서 굴러서 허벅지가 심하게 부어오르고 다리가 짧아 보여요,15,2,3,정형외과|외상외과,소아청소년과|외과|응급의학과,,,,3.67,?,True,False,False,True,True,False,True,False,False,,False
+H040,일반,남편이 사우나에서 나오다 쓰러졌는데 지금은 정신 차렸어요 가슴이 두근거린대요,58,2,2,순환기내과|내과,심장혈관흉부외과|응급의학과|내과,,,,3.86,?,True,False,True,True,False,False,False,False,True,,False
+H041,일반,형이 술 먹고 계속 토하다가 이제 숨소리가 이상해요,33,2,2,응급의학과|내과,소화기내과|응급의학과,,,,3.74,?,True,False,True,True,False,False,False,False,True,,False
+H042,일반,아이가 배가 아프다는데 열은 없고 잘 놀아요,6,4,4,소아청소년과,소아청소년과|응급의학과|소화기내과,,,,3.78,?,True,False,True,True,False,False,False,True,True,,False
+H043,일반,엄마가 넘어져서 무릎이 까지고 좀 부었어요 걷는 건 하세요,66,4,4,정형외과,소아청소년과|외과|응급의학과,,,,3.92,?,True,False,True,True,False,False,False,False,False,,False
+H044,일반,손등을 다리미에 살짝 데어서 빨개요,34,4,4,피부과|외과|성형외과,소아청소년과|외과|응급의학과,,,,3.7,?,True,False,True,True,False,False,False,False,True,,False
+H045,일반,눈에 먼지가 들어간 것 같아 따끔거려요,28,4,4,안과,안과,,,,3.28,?,True,False,True,True,False,False,False,True,True,,False
+H046,일반,아빠가 요로결석이 있으신데 옆구리가 끊어질 듯 아프대요,51,3,3,비뇨의학과,내과|신경과|신장내과,,,,3.53,?,True,False,True,True,False,False,False,False,False,,False
+H047,일반,할머니가 사흘째 열이 나고 기침하시는데 밥은 조금 드세요,80,3,5,호흡기내과|내과|감염내과,내과|감염내과|호흡기내과,,,,3.7,?,True,False,False,False,True,False,False,True,True,,False
+H048,일반,아들이 농구하다가 손가락이 퉁퉁 부었어요,16,4,4,정형외과,소아청소년과|재활의학과|외과,,,,3.58,?,True,False,True,True,False,False,False,False,False,,False
+H049,일반,동생이 오토바이에서 넘어져서 팔꿈치가 많이 까졌어요 피는 멈췄어요,20,4,4,외과|정형외과,외과|응급의학과|소아청소년과,,,,3.64,?,True,False,True,True,False,False,False,True,True,,False
+H050,일반,입안이 헐어서 아파요,30,5,4,이비인후과|내과|치과,치과|응급의학과,,,,3.48,?,True,False,False,True,False,True,False,True,True,,False
+H051,일반,비염이 심해져서 코가 막혀요,25,5,5,이비인후과,내과|호흡기내과|감염내과,,,,3.68,?,True,False,True,True,False,False,False,False,False,,False
+H052,일반,어깨가 몇 주째 결려요,45,5,4,정형외과|재활의학과,내과|정형외과|신경과,,,,3.57,?,True,False,False,True,False,True,False,False,True,,False
+H053,일반,건강검진 결과지 상담 받고 싶어요,50,5,5,내과,내과|감염내과|정형외과,,,,3.51,?,True,False,True,True,False,False,False,True,True,,False
+H054,일반,속이 더부룩하고 소화가 안 돼요,38,5,4,소화기내과|내과,소화기내과|응급의학과|내분비내과,,,,3.71,?,True,False,False,True,False,True,False,True,True,,False
+H055,함정,숨은 잘 쉬는데 콧물이 좀 나요,22,5,5,이비인후과|내과,내과|호흡기내과|감염내과,,,,3.65,?,True,False,True,True,False,False,False,True,True,,False
+H056,함정,몇 년 전에 뇌경색 있으셨는데 오늘은 재활 상담하러 가요,70,5,5,신경과|재활의학과,신경과|재활의학과,,,,3.44,?,True,False,True,True,False,False,False,True,True,,False
+H057,함정,가슴이 아픈 건 아니고 마음이 좀 우울해요,26,4,4,정신건강의학과,정신건강의학과|심장혈관흉부외과|내과,,,,3.76,?,True,False,True,True,False,False,False,True,True,,False
+H058,되묻기,우리 엄마 좀 봐주세요,70,,5,,응급의학과,,,,3.21,?,False,,,,,,,,,,
+H059,되묻기,큰일났어요 빨리요,,,,,,,,어떤 증상이 있으신지 조금 더 자세히 말씀해 주세요.,0.0,?,True,,,,,,,,,,
+H060,되묻기,아기가 이상해요,1,,,,,,,어떤 증상이 있으신지 조금 더 자세히 말씀해 주세요.,0.0,?,True,,,,,,,,,,
+H061,되묻기,어떻게 해야 할지 모르겠어요,,,,,,,,어떤 증상이 나타났나요？,3.47,?,True,,,,,,,,,,

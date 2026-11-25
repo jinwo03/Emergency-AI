@@ -7,6 +7,7 @@ import math
 from datetime import datetime
 
 from algorithm.errors import DataUnavailableError
+from algorithm.explain import explain
 from contracts.schemas import RankedHospital, RecommendationMode, RecommendationResult
 from egen import store
 
@@ -68,8 +69,7 @@ def rank_hospitals(
         dist = haversine_km(lat, lon, s["lat"], s["lon"])
         age_min = int((now - datetime.fromisoformat(s["hvidate"])).total_seconds() // 60)
         beds = s["hvec"]
-        beds_text = "정보 없음" if beds is None else (f"{beds}개" if beds > 0 else "없음(과밀)")
-        hospitals.append(RankedHospital(
+        h = RankedHospital(
             rank=rank,
             hpid=s["hpid"],
             name=s["name"],
@@ -82,7 +82,9 @@ def rank_hospitals(
             beds_available=beds,
             data_age_min=max(0, age_min),
             notices=notices.get(s["hpid"], []),
-            reason=f"직선거리 {dist:.1f}km, 응급실 가용 병상 {beds_text} (거리순 기본 추천)",
-        ))
+        )
+        # 추천 사유 문장 (C). 순위는 바꾸지 않음. AI 모드가 붙으면 SHAP 기여도를 contributions 로 넘기면 됨
+        h.reason = explain(h, ktas, departments, conditions)
+        hospitals.append(h)
 
     return RecommendationResult(mode=RecommendationMode.fallback, warning=FALLBACK_WARNING, hospitals=hospitals)
