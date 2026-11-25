@@ -43,6 +43,22 @@ DEPARTMENTS = [
 ]
 ALL_DEPARTMENTS = "전체"
 
+# 증상 분석(algorithm/egen_codes.DEPARTMENTS)만 쓰고 메시지에는 나오지 않는 진료과 → 메시지 대조 때 볼 진료과.
+# '내과'는 세부 내과 전부로 넓게 본다 (해당 메시지를 놓치는 것보다 안전). 응급의학과는 '전체' 줄만 맞는다.
+TRIAGE_ONLY_DEPARTMENTS = {
+    "내과": [d for d in DEPARTMENTS if d.endswith("내과")],
+    "심장혈관흉부외과": ["흉부외과"],
+    "응급의학과": [],
+}
+
+
+def message_departments(departments) -> frozenset[str]:
+    """환자 진료과를 메시지 진료과 표기로 넓힌다 (원래 이름도 남긴다)."""
+    out = set(departments)
+    for d in departments:
+        out.update(TRIAGE_ONLY_DEPARTMENTS.get(d, []))
+    return frozenset(out)
+
 PATIENT_CONDITIONS = {
     "소아": "18세 미만. 문구의 나이·체중 기준은 대상 칸에 남긴다",
     "신생아": "생후 28일 이내, 미숙아·저체중 출생아 포함",

@@ -93,3 +93,23 @@ def test_score_splits_and_counts_missing_invalid():
     assert (report["test"]["missing"], report["test"]["invalid"]) == (1, 1)
     assert report["test_without_near_dup"]["scored"] == 0
     assert set(details["status"]) == {"scored", "missing", "invalid"}
+
+
+def test_triage_departments_all_reach_message_vocabulary():
+    """증상 분석이 낼 수 있는 진료과는 모두 메시지 진료과로 대조할 수 있어야 한다 (안전 필터가 빠지지 않게)."""
+    from algorithm import egen_codes
+    from contracts import vocab
+
+    known = set(vocab.DEPARTMENTS) | set(vocab.TRIAGE_ONLY_DEPARTMENTS)
+    assert set(egen_codes.DEPARTMENTS) <= known
+    assert {d for c in egen_codes.EGEN_CONDITIONS.values() for d in c["depts"]} <= known
+    assert set(egen_codes.EGEN_CONDITIONS) == set(vocab.DISEASE_CODES)
+
+
+def test_general_internal_medicine_matches_subspecialty_message():
+    from algorithm.message_match import Patient, line_applies
+
+    line = ["소화기 내시경", "소화기내과", "", "", "항상", "불가", ""]
+    assert line_applies(line, Patient.of(["내과"]))
+    assert line_applies(["대동맥", "흉부외과", "", "", "항상", "불가", ""], Patient.of(["심장혈관흉부외과"]))
+    assert not line_applies(line, Patient.of(["응급의학과"]))

@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from functools import lru_cache
 
-from contracts.vocab import ALL_DEPARTMENTS
+from contracts.vocab import ALL_DEPARTMENTS, message_departments
 from preprocessing import time_rule
 
 TARGET, DEPT, CODES, CONDS, TIME, STATUS, CAUTION = range(7)
@@ -28,7 +28,8 @@ class Patient:
 
     @classmethod
     def of(cls, departments=(), disease_codes=(), conditions=()) -> "Patient":
-        return cls(frozenset(departments), frozenset(disease_codes), frozenset(conditions))
+        """진료과는 메시지 표기로 넓힌다 (예: 증상 분석의 '내과' → 세부 내과)."""
+        return cls(message_departments(departments), frozenset(disease_codes), frozenset(conditions))
 
 
 def values(cell) -> frozenset[str]:
