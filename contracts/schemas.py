@@ -7,8 +7,13 @@
 """
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field
+
+from contracts.vocab import PATIENT_CONDITIONS
+
+PatientCondition = Literal[tuple(PATIENT_CONDITIONS)]  # 값과 뜻은 contracts/vocab.py
 
 
 # ---------- 공통 ----------
@@ -41,7 +46,11 @@ class TriageResult(BaseModel):
     status: TriageStatus
     ktas: int | None = Field(None, ge=1, le=5, description="추정 KTAS 중증도 (1=가장 위급)")
     departments: list[str] = Field(default_factory=list, examples=[["순환기내과"]])
-    conditions: list[str] = Field(default_factory=list, description="의심 중증질환 코드", examples=[["AMI"]])
+    conditions: list[str] = Field(default_factory=list, description="의심 중증질환 Y코드 (contracts.vocab.DISEASE_CODES)",
+                                  examples=[["Y0010"]])
+    patient_conditions: list[PatientCondition] = Field(
+        default_factory=list, description="환자 조건 (contracts.vocab.PATIENT_CONDITIONS). 추정할 수 없으면 비움",
+        examples=[["성인", "중증"]])
     follow_up_question: str | None = Field(None, examples=["지금 의식이 있으신가요?"])
 
 
@@ -61,7 +70,10 @@ class RecommendationRequest(BaseModel):
     lon: float = Field(..., ge=124.0, le=132.0, examples=[127.0276])
     ktas: int = Field(..., ge=1, le=5)
     departments: list[str] = Field(default_factory=list)
-    conditions: list[str] = Field(default_factory=list)
+    conditions: list[str] = Field(default_factory=list, description="의심 중증질환 Y코드", examples=[["Y0010"]])
+    age: int | None = Field(None, ge=0, le=120, description="환자 나이 (모르면 null)")
+    patient_conditions: list[PatientCondition] = Field(
+        default_factory=list, description="환자 조건. triage 결과를 그대로 넘김", examples=[["성인", "중증"]])
     limit: int = Field(5, ge=1, le=20)
 
 

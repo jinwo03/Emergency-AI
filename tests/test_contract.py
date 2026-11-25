@@ -19,8 +19,20 @@ def test_analyze_symptoms_returns_contract_type():
         assert result.follow_up_question
 
 
+def test_analyze_symptoms_patient_conditions_in_vocab():
+    from contracts.vocab import PATIENT_CONDITIONS
+    result = algorithm.analyze_symptoms("아버지가 갑자기 가슴이 아프다고 쓰러지셨어요", 68, [])
+    assert set(result.patient_conditions) <= set(PATIENT_CONDITIONS)
+
+
+def test_rank_hospitals_accepts_patient_fields():
+    result = algorithm.rank_hospitals(37.4979, 127.0276, 2, ["순환기내과"], ["Y0010"], 2,
+                                      age=68, patient_conditions=["성인", "중증"])
+    assert isinstance(result, RecommendationResult)
+
+
 def test_rank_hospitals_sorted_and_limited():
-    result = algorithm.rank_hospitals(37.4979, 127.0276, 2, ["순환기내과"], ["AMI"], limit=2)
+    result = algorithm.rank_hospitals(37.4979, 127.0276, 2, ["순환기내과"], ["Y0010"], limit=2)
     assert isinstance(result, RecommendationResult)
     assert len(result.hospitals) <= 2
     assert [h.rank for h in result.hospitals] == sorted(h.rank for h in result.hospitals)
@@ -72,3 +84,17 @@ def test_hospital_detail_and_not_found():
     r = client.get("/v1/hospitals/XXXX")
     assert r.status_code == 404
     assert r.json()["error"]["code"] == "HOSPITAL_NOT_FOUND"
+
+
+def test_recommendations_accepts_patient_fields():
+    r = client.post("/v1/recommendations", json={"lat": 37.4979, "lon": 127.0276, "ktas": 2, "age": 68,
+                                                 "patient_conditions": ["성인", "중증"], "limit": 3})
+    assert r.status_code == 200
+
+
+def test_unknown_patient_condition_is_validation_error():
+    r = client.post("/v1/recommendations", json={"lat": 37.4979, "lon": 127.0276, "ktas": 2,
+                                                 "patient_conditions": ["노인"]})
+    assert r.status_code == 422
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert "patient_conditions" in r.json()["error"]["message"]

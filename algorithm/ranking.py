@@ -38,8 +38,13 @@ def rank_hospitals(
     departments: list[str],
     conditions: list[str],
     limit: int,
+    age: int | None = None,
+    patient_conditions: list[str] | None = None,
 ) -> RecommendationResult:
     """현재 위치와 환자 상태로 병원 순위를 산출한다.
+
+    age, patient_conditions 는 응급 메시지의 대상 줄(진료과·질환·조건)과 환자를 맞추는 데 쓴다.
+    TODO(알고리즘 담당): 아직 베이스라인은 쓰지 않는다.
 
     신뢰도가 낮으면 mode=fallback, accept_prob=None, warning 에 안내 문구를 채운다.
     hospitals 는 rank 오름차순, 최대 limit 개.

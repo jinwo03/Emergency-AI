@@ -103,7 +103,8 @@ def triage(req: TriageRequest):
 
 @app.post("/v1/recommendations", response_model=RecommendationResponse, responses=ERROR_RESPONSES)
 def recommendations(req: RecommendationRequest):
-    result = algorithm.rank_hospitals(req.lat, req.lon, req.ktas, req.departments, req.conditions, req.limit)
+    result = algorithm.rank_hospitals(req.lat, req.lon, req.ktas, req.departments, req.conditions, req.limit,
+                                      age=req.age, patient_conditions=req.patient_conditions)
     return RecommendationResponse(**result.model_dump(), generated_at=datetime.now(KST))
 
 
